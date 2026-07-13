@@ -108,6 +108,7 @@ export class MusicEngine {
           };
 
           this.audio = wrapper;
+          try { window.__music_fallback = true; } catch (e) {}
           console.info("MusicEngine: using WebAudio fallback (sine)");
         } else {
           console.warn("MusicEngine: no audio file found and WebAudio unavailable.");
@@ -120,6 +121,7 @@ export class MusicEngine {
     }
     // mark started once we have an audio element
     this.started = true;
+    try { window.__music_started = true; } catch (e) {}
 
     // Play (user gesture should have occurred when start() is called)
     try {
