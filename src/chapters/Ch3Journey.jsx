@@ -136,7 +136,7 @@ export default function Ch3Journey() {
           >
             <div className="relative overflow-hidden rounded-[1.1rem]">
               <img
-                src="/images/our-journey.jpeg"
+                src={`${import.meta.env.BASE_URL}images/our-journey.jpeg`}
                 alt="Us — where it all began"
                 className="journey-img block w-full will-change-transform"
                 draggable="false"

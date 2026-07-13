@@ -206,7 +206,7 @@ export default function Ch6Forever() {
     let sizeKey = "";
 
     const image = new Image();
-    image.src = "/images/our-journey.jpeg";
+    image.src = `${import.meta.env.BASE_URL}images/our-journey.jpeg`;
     image.onload = () => (img = image);
 
     const ensureTargets = (w, h) => {

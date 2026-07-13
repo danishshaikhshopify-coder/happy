@@ -7,7 +7,7 @@ export default function MusicToggle() {
   const toggle = async () => {
     if (!music.started) {
       await music.start();
-      setPlaying(true);
+      setPlaying(music.started && !music.muted);
       return;
     }
     const next = !playing;
