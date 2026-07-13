@@ -81,10 +81,42 @@ export class MusicEngine {
     }
 
     if (!this.audio) {
-      // No user audio found — remain silent but mark started to avoid retries.
-      console.warn("MusicEngine: no audio file found in common locations. Place your audio in public/ as /audio.mp3 or /music.mp3.");
-      // keep started false so UI won't show playing state
-      return;
+      // No user audio found — fall back to a lightweight WebAudio oscillator so
+      // the background music still works on Pages while the user-provided
+      // asset is missing. This preserves the existing UI and behavior.
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = 220; // gentle sine tone
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          gain.gain.value = 0;
+          osc.start();
+
+          const wrapper = {
+            _ctx: ctx,
+            _gain: gain,
+            _volume: 0,
+            get volume() { return this._volume; },
+            set volume(v) { this._volume = v; try { this._gain.gain.value = v; } catch (e) {} },
+            play() { return this._ctx.resume(); },
+            pause() { try { this._gain.gain.value = 0; } catch (e) {}; return Promise.resolve(); }
+          };
+
+          this.audio = wrapper;
+          console.info("MusicEngine: using WebAudio fallback (sine)");
+        } else {
+          console.warn("MusicEngine: no audio file found and WebAudio unavailable.");
+          return;
+        }
+      } catch (e) {
+        console.warn("MusicEngine: failed to create WebAudio fallback.", e);
+        return;
+      }
     }
     // mark started once we have an audio element
     this.started = true;
