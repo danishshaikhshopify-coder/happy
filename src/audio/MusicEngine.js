@@ -20,17 +20,19 @@ export class MusicEngine {
       return;
     }
     // candidate paths to try (user should place their file in public/ so it's served)
+    const base = import.meta.env.BASE_URL || "/";
+    const safeBase = base.endsWith("/") ? base : `${base}/`;
     const names = ["audio","music","background","track","nabia","song","theme"];
     const exts = ["mp3","m4a","wav","ogg","aac"];
     const candidates = [];
     for (const n of names) for (const e of exts) {
-      candidates.push(`/${n}.${e}`);
-      candidates.push(`/audio/${n}.${e}`);
-      candidates.push(`/assets/${n}.${e}`);
-      candidates.push(`/src/audio/${n}.${e}`);
+      candidates.push(`${safeBase}${n}.${e}`);
+      candidates.push(`${safeBase}audio/${n}.${e}`);
+      candidates.push(`${safeBase}assets/${n}.${e}`);
+      candidates.push(`${safeBase}src/audio/${n}.${e}`);
     }
     // also try a few explicit paths
-    candidates.push("/nabia.mp3", "/nabia.m4a", "/audio/nabia.mp3");
+    candidates.push(`${safeBase}nabia.mp3`, `${safeBase}nabia.m4a`, `${safeBase}audio/nabia.mp3`);
 
     const tryLoad = (src, timeout = 3000) => new Promise((resolve, reject) => {
       const a = new Audio();
@@ -49,8 +51,21 @@ export class MusicEngine {
       a.addEventListener("canplaythrough", onCan, { once: true });
       a.addEventListener("error", onErr, { once: true });
       a.src = src;
-      // start loading
       a.load();
+      const playPromise = a.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        playPromise.then(() => {
+          if (done) return;
+          done = true;
+          clean();
+          resolve(a);
+        }).catch((err) => {
+          if (done) return;
+          done = true;
+          clean();
+          reject(err);
+        });
+      }
     });
 
     let audio = null;
